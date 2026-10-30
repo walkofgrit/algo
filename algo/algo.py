@@ -7,6 +7,7 @@ import pandas as pd
 import backtrader as bt
 import logging
 import datetime
+import os
 import os.path
 import sys
 import time
@@ -15,6 +16,25 @@ from datetime import datetime, timezone
 #Load OANDA Packges
 import oandapyV20
 import oandapyV20.endpoints.instruments as instruments
+
+# OANDA API token: read from the environment (never hardcode it).
+# Optionally, define OANDA_API_TOKEN in an uncommitted local file config_local.py.
+OANDA_API_TOKEN = os.environ.get("OANDA_API_TOKEN")
+if not OANDA_API_TOKEN:
+    try:
+        from config_local import OANDA_API_TOKEN  # noqa: F401 (git-ignored)
+    except ImportError:
+        OANDA_API_TOKEN = None
+
+
+def _oanda_token():
+    """Return the OANDA API token or raise a clear error if it is not set."""
+    if not OANDA_API_TOKEN:
+        raise RuntimeError(
+            "OANDA_API_TOKEN is not set. Set it in your environment "
+            "(export OANDA_API_TOKEN=...) or in an uncommitted config_local.py."
+        )
+    return OANDA_API_TOKEN
 
 #choose a group of bitcoin, indices, and forex
 #iterate through the instruments using the select function
@@ -247,7 +267,7 @@ class algo:
     return pd.concat(results)  # Combine all instruments into one DataFrame
 
   def OANDA_Connection_Latest1(self, pair):
-    client = oandapyV20.API(access_token="10403da028e856603b23b320c65890cd-95a77404131b95acda03ecd94ff68fa0")
+    client = oandapyV20.API(access_token=_oanda_token())
     params = {"count": 1, "granularity": self.timeframe}
     r = instruments.InstrumentsCandles(instrument=pair, params=params)
     client.request(r)
@@ -258,7 +278,7 @@ class algo:
     return latest_datetime
 
   def OANDA_Connection1(self, active_datetime, pair):
-    client = oandapyV20.API(access_token="10403da028e856603b23b320c65890cd-95a77404131b95acda03ecd94ff68fa0")
+    client = oandapyV20.API(access_token=_oanda_token())
     params = {"from": active_datetime, "count": 50, "granularity": self.timeframe}
     r = instruments.InstrumentsCandles(instrument=pair, params=params)
     client.request(r)
@@ -289,7 +309,7 @@ class algo:
     return all_data
 
   def OANDA_Connection_Latest(self, pair):
-    client = oandapyV20.API(access_token="10403da028e856603b23b320c65890cd-95a77404131b95acda03ecd94ff68fa0")
+    client = oandapyV20.API(access_token=_oanda_token())
     params = {"count": 1, "granularity": self.timeframe}
     r = instruments.InstrumentsCandles(instrument=pair, params=params)
     client.request(r)
@@ -299,7 +319,7 @@ class algo:
     return latest_datetime
   
   def OANDA_Connection(self, active_datetime, pair):
-    client = oandapyV20.API(access_token="10403da028e856603b23b320c65890cd-95a77404131b95acda03ecd94ff68fa0")
+    client = oandapyV20.API(access_token=_oanda_token())
     params = {"from": active_datetime, "count": 50, "granularity": self.timeframe}
     r = instruments.InstrumentsCandles(instrument=pair, params=params)
     client.request(r)
